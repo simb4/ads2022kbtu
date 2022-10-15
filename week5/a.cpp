@@ -18,20 +18,20 @@ struct node {
     int key;
     node *l = NULL; // left son
     node *r = NULL; // right son 
-    node(){}
+    node() {}
     node(int key) {
         this->key = key;
     }
 };
 
-node *root = NULL;
+node *root;
 
 node* insert(node *v, int key) {
     if (v == NULL) {
         v = new node(key);
         return v;
     }
-    if (key < v->key)
+    if (key <= v->key)
         v->l = insert(v->l, key);
     else
         v->r = insert(v->r, key);
@@ -43,59 +43,78 @@ node* find(node *v, int key) {
         return NULL;
     if (v->key == key)
         return v;
-    if (v->key < key)
+    if (key <= v->key)
         return find(v->l, key);
     return find(v->r, key);
 }
 
+void del_node_with_no_left_child(node *v, node *par, bool is_left) {
+    if (is_left) {
+        par->l = v->r;
+    } else {
+        par->r = v->r;
+    }
+    delete v;
+}
+
 bool del(node* root, int key) {
-    // find the vertex
-    node *par = NULL;
-    node *cur = root;
-    while (cur->key != key) {
-        par = cur;
-        if (cur->key < key)
-            cur = cur->l;
-        else
-            cur = cur->r;
-    }
-    if (cur == NULL)
+    if (root == NULL)
         return false;
-    
-    bool is_left_son = par != NULL && par->l != NULL && par->l->key == cur->key;
-    bool is_right_son = par != NULL && par->r != NULL && par->r->key == cur->key;
-    // our vertex is leaf
-    if (cur->l == NULL && cur->r == NULL) {
-        if (par != NULL) {
-            // if its left child
-            if (is_left_son)
-                par->l = NULL;
 
-            // if its right child
-            if (is_right_son)
-                par->r = NULL;
+    // find vertex v with key
+    // and also its parent and which child (left or right)
+    node *par = NULL;
+    node *v = root;
+    bool is_left = false;
+    while (v->key != key) {
+        if (key < v->key) {
+            par = v;
+            v = v->l;
+            is_left = true;
         }
+        else {
+            par = v;
+            v = v->r;
+            is_left = false;
+        }
+        if (v == NULL)
+            return false;
+    }
 
-        delete cur;
+    // v is a leaf
+    if (v->l == NULL && v->r == NULL) {
+        if (is_left)
+            par->l = NULL;
+        else
+            par->r = NULL;
+
+        delete v;
         return true;
     }
 
-    // our vertex does not have right child
-    if (cur->r == NULL) {
-
-        if (par != NULL && is_left_son)
-            par->l = cur->l;
-        if (par != NULL && is_right_son)
-            par->r = cur->l;
-
-        delete cur;
+    // v has no left child
+    if (v->l == NULL) {
+        del_node_with_no_left_child(v, par, is_left);
         return true;
     }
-    // our vertex does have right child:
 
-    // TODO Compete it!
+    // v has two children
+    int newKey;
+    if (v->r->l == NULL) {
+         newKey = v->r;
+        del_node_with_no_left_child(v->r, v, false);
+    } else {
+        node *lpar = v;
+        node *leftmost = v->r;
+        while (leftmost->l != NULL) {
+            lpar = leftmost;
+            leftmost = leftmost->l;
+        }
+        newKey = leftmost->key;
+        del_node_with_no_left_child(leftmost, lpar, true);
+    }
 
-    return true;
+    v->key = newKey;
 }
 
 void print(node* v, int tab = 0) {
@@ -111,25 +130,28 @@ void print(node* v, int tab = 0) {
 }
 
 int main () {
+    
+    root = insert(root, 25);
+    insert(root, 15);
+    insert(root, 10);
+    insert(root, 4);
+    insert(root, 12);
+    insert(root, 22);
+    insert(root, 18);
+    insert(root, 24);
+
+    insert(root, 50);
+    insert(root, 35);
+    insert(root, 44);
+
+    insert(root, 70);
+    insert(root, 66);
 
     
-    root = insert(root, 10);
-    insert(root, 5);
-    insert(root, 2);
-    insert(root, 1);
-    insert(root, 4);
-    insert(root, 8);
-    insert(root, 6);
-    insert(root, 7);
-    insert(root, 9);
-    insert(root, 13);
-    insert(root, 11);
-    insert(root, 16);
-    insert(root, 17);
+
+    insert(root, 23);
 
     print(root);
-
-
 
     return 0;
 }
